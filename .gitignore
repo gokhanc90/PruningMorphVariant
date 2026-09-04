@@ -1,0 +1,17 @@
+# generated output
+# The score tables are shipped so that the pruning stage runs out of the box;
+# everything else under code/out/ is produced by running the pipeline.
+code/out/*
+!code/out/scores_*.csv
+code/**/*.class
+__pycache__/
+*.pyc
+
+# model caches
+.cache/
+
+# retrieval output and the index: too large to track
+runs/*
+!runs/README.md
+index/*
+!index/README.md
