@@ -289,13 +289,3 @@ Holm-Bonferroni correction within each family of comparisons.
 - **The fastText model.** `cc.en.300.bin` from
   <https://fasttext.cc/docs/en/crawl-vectors.html>.
 
-## A note on the `[CLS]` representation
-
-The version of this work that was first submitted used a `[CLS]` pooling
-implementation with a defect: the two words of a pair were tokenised as one
-batch, padded to a common length, and the attention mask was not passed to the
-model. A term's vector therefore depended on the length of whichever variant it
-happened to be paired with. `scorers.py` keeps that code as `cls_orig` so the
-original numbers stay reproducible, and adds `cls_masked`, which is the same
-pooling with the mask passed. The paper reports `cls_masked`, and the shipped
-conflation sets under `representations/` use it.
