@@ -63,7 +63,7 @@ pip install -r requirements.txt
 
 Retrieval additionally needs a JDK and the
 `lucene-clueweb-retrieval` toolkit, which supplies `Searcher`, `Tag`, `DataSet`
-and the similarity implementations: <https://github.com/iorixxx/lucene-clueweb-retrieval>.
+and the similarity implementations: <https://bitbucket.org/gokhanc/lucene-clueweb-retrieval/src/master/>.
 
 `eval_baselines.py` and `evaluate_runs.py` shell out to `gdeval.pl` and so need
 Perl. The other two evaluation scripts use the bundled `gdeval_py.py` instead,
