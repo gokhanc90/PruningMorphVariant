@@ -2,13 +2,8 @@
 
 Methods
 -------
-cls_orig      : The submitted version. The two words are batched TOGETHER, padded
-                with zeros ([PAD]) to a common length, attention_mask is NOT passed,
-                and the [CLS] of the final layer is read.
-                -> a term's vector depends on the length of the variant it happens
-                   to be paired with (the defect).
-cls_masked    : The same, but attention_mask is passed; the vector is specific to
-                the word (the minimal correction).
+cls_masked    : [CLS] pooling of the final layer, with attention_mask passed,
+                so that the vector is specific to the word.
 subword_mean  : Mean over the word's OWN sub-word tokens (special tokens excluded).
 query_ctx     : The term is encoded inside its own query; the variant is substituted
                 in its place in the same query. In both cases the sub-words of the
@@ -30,19 +25,6 @@ class BertScorer:
         self.tok = AutoTokenizer.from_pretrained(name)
         self.model = AutoModel.from_pretrained(name)
         self.model.eval()
-
-    # ---------- the submitted version ----------
-    def cls_orig(self, w1, w2):
-        ids = []
-        for w in (w1, w2):
-            e = self.tok(w, add_special_tokens=True, max_length=16,
-                         padding="longest", return_tensors="pt", truncation=True)
-            ids.append(e["input_ids"])
-        m = max(i.shape[1] for i in ids)
-        t = torch.cat([torch.nn.ZeroPad2d((0, m - i.shape[1], 0, 0))(i) for i in ids], 0)
-        with torch.no_grad():
-            v = self.model(t).last_hidden_state[:, 0, :].numpy()
-        return _cos(v[0], v[1])
 
     # ---------- word-specific vectors (batched) ----------
     def _encode(self, words, bs=256):

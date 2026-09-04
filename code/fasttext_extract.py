@@ -10,31 +10,24 @@ import numpy as np
 import pandas as pd
 
 warnings.filterwarnings("ignore")
-PMV = Path(r"SET_NPMI_WORKBOOK_DIR_HERE")
+PMV = Path(__file__).parent.parent / "npmi"
 CACHE = Path(r"SET_FASTTEXT_CACHE_DIR_HERE")
 OUT = Path(__file__).parent / "out"
 OUT.mkdir(exist_ok=True)
 GZ, BIN = CACHE / "cc.en.300.bin.gz", CACHE / "cc.en.300.bin"
 
 # --- 1) collect every word
-SOURCES = [("npmi-CW09B.xlsx", ["SnowballEng", "KStem"]),
-           ("npmi-NTCIR-Bert.xlsx", ["SnowballEng", "KStem"]),
-           ("npmi-GOV2-Bert.xlsx", ["SnowballEng", "KStem"]),
-           ("npmi-WSJ-Bert.xlsx", ["SnowballEng", "KStem"])]
+SOURCES = ["npmi_CW09B_SnowballEng.csv", "npmi_CW09B_KStem.csv",
+           "npmi_NTCIR_SnowballEng.csv", "npmi_NTCIR_KStem.csv"]
 words = set()
-for f, sheets in SOURCES:
+for f in SOURCES:
     p = PMV / f
     if not p.exists():
         print(f"  skipped (missing): {f}")
         continue
-    for sh in sheets:
-        try:
-            d = pd.read_excel(p, sheet_name=sh, header=0)
-        except ValueError:
-            print(f"  skipped (no such sheet): {f}/{sh}")
-            continue
-        words |= set(d["Term"].astype(str)) | set(d["Morph"].astype(str))
-        print(f"  {f}/{sh}: {len(d)} rows -> {len(words)} unique words so far")
+    d = pd.read_csv(p)
+    words |= set(d["Term"].astype(str)) | set(d["Morph"].astype(str))
+    print(f"  {f}: {len(d)} rows -> {len(words)} unique words so far")
 words = sorted(words)
 print(f"\nTOTAL unique words: {len(words)}")
 

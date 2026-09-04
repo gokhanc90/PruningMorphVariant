@@ -39,6 +39,7 @@ it by 1.25 to 1.54, a 93.5% reduction in the terms actually submitted.
 code/          every script, flat, so that "out/" always sits next to them
   java/        the retrieval drivers and the two Lucene classes they need
   out/         the four score tables (see "Where NPMI comes from" below)
+npmi/          the co-occurrence input that scoring reads (4 files, 1.3 MB)
 synonyms/      the conflation sets used in the paper (42 files, 6.1 MB)
   CW09B/       ClueWeb09 Category B
   NTCIR/       ClueWeb12-B13, retrieved for the NTCIR WWW tracks
@@ -73,17 +74,16 @@ which is a pure-Python reimplementation; it was checked against `gdeval.pl` on
 ## Paths to set
 
 Every machine-specific path is a placeholder of the form `SET_..._HERE`. There
-are three:
+are two:
 
 | Placeholder | Meaning | Files |
 |---|---|---|
 | `SET_TFD_HOME_HERE` | the `TFD_HOME` root (index, conflation sets, qrels) | 7 Python scripts, `$TFD` in the 4 `.ps1` |
 | `SET_LUCENE_TOOLKIT_DIR_HERE` | the built `lucene-clueweb-retrieval` distribution | `$DIST` in the 4 `.ps1` |
-| `SET_NPMI_WORKBOOK_DIR_HERE` | the directory holding the `npmi-*.xlsx` workbooks | `score_all.py`, `fasttext_extract.py` |
 
 `fasttext_extract.py` also has `SET_FASTTEXT_CACHE_DIR_HERE`, which is only the
-directory to keep the downloaded `cc.en.300.bin` in. Every script writes its
-output to `code/out/`, which needs no configuration.
+directory to keep the downloaded `cc.en.300.bin` in. Every script reads its input
+from `npmi/` and writes its output to `code/out/`; neither needs configuration.
 
 `index/README.md` describes the `TFD_HOME` layout the drivers expect.
 
@@ -94,16 +94,25 @@ This matters, so it is worth stating plainly: **no script in this repository
 computes NPMI.**
 
 **The NPMI the pruning uses** — the `npmi` term in
-`S = beta * NPMI + (1 - beta) * CS_scaled` — is read, not computed.
-`score_all.py` takes it from the workbooks `npmi-CW09B.xlsx` and
-`npmi-NTCIR-Bert.xlsx` (columns `QID, Term, Morph, npmi`), which were produced
-by an earlier stage of this project and are not distributed here. The values are
-pointwise mutual information, normalised, computed over the same unstemmed index
-the retrieval runs against, using the `PMI` class of the
-`lucene-clueweb-retrieval` toolkit (`edu.anadolu.qpp.PMI.npmi(a, b)`).
+`S = beta * NPMI + (1 - beta) * CS_scaled` — is read, not computed. The values
+are normalised pointwise mutual information, computed over the same unstemmed
+index the retrieval runs against, using the `PMI` class of the
+`lucene-clueweb-retrieval` toolkit (`edu.anadolu.qpp.PMI.npmi(a, b)`), at an
+earlier stage of this project.
 
-So that the pruning stage is reproducible without those workbooks, the four
-score tables are shipped under `code/out/`:
+That input is shipped here, so `score_all.py` needs nothing external:
+
+```
+npmi/npmi_CW09B_KStem.csv    npmi/npmi_CW09B_SnowballEng.csv
+npmi/npmi_NTCIR_KStem.csv    npmi/npmi_NTCIR_SnowballEng.csv
+```
+
+Each file lists one (query term, morphological variant) pair per row with its
+NPMI value: `QID, Term, Morph, npmi`. `score_all.py` reads these, drops duplicate
+(Term, Morph) rows, and adds one column per representation.
+
+The output of that step is shipped too, under `code/out/`, so the pruning stage
+runs without recomputing the embeddings:
 
 ```
 scores_CW09B_KStem.csv   scores_CW09B_SnowballEng.csv
@@ -148,8 +157,9 @@ cd code
 python score_all.py
 ```
 
-This writes `out/scores_<collection>_<stemmer>.csv`, one row per pair, with a
-column per representation plus the `npmi` column read from the workbooks. It
+It reads the pair lists from `npmi/` and writes
+`out/scores_<collection>_<stemmer>.csv`, one row per pair, with a column per
+representation plus the `npmi` column carried through from the input. It
 downloads `bert-base-uncased` and the sentence-transformers model on first use.
 The `fasttext` column needs `out/fasttext_vectors.npz`, which comes from a
 separate one-off step because the fastText model needs about 7 GB of RAM:
@@ -283,9 +293,5 @@ Holm-Bonferroni correction within each family of comparisons.
   document collections. See `index/README.md`.
 - **Topics and relevance judgments.** Available from NIST (TREC Web) and the
   NTCIR organisers; `index/README.md` lists the file names the scripts expect.
-- **The NPMI workbooks.** `score_all.py` reads the (term, variant) pairs and
-  their NPMI values from `npmi-*.xlsx`. See "Where NPMI comes from" above; the
-  four shipped score tables make this stage reproducible without them.
 - **The fastText model.** `cc.en.300.bin` from
   <https://fasttext.cc/docs/en/crawl-vectors.html>.
-

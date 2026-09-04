@@ -56,7 +56,7 @@ def read_syn(p):
 
 if __name__ == "__main__":
     print("=" * 90)
-    print("CHECK: does cls_orig @ (beta=0.5, Th=0.6) reproduce the existing files?")
+    print("CHECK: does subword_mean @ (beta=0.5, Th=0.6) reproduce the shipped sets?")
     print("=" * 90)
     tmp = OUT / "tmp_syn"
     tmp.mkdir(exist_ok=True)
@@ -66,13 +66,11 @@ if __name__ == "__main__":
         if not sc.exists():
             print(f"  {coll}/{stem}: no score file, skipped")
             continue
-        keep, terms, lb = prune(sc, "cls_orig", 0.5, 0.6)
-        p = tmp / f"{BASE_TAG[stem]}_bert-base-uncased_alpha0.5_threshold0.6.txt"
+        keep, terms, lb = prune(sc, "subword_mean", 0.5, 0.6)
+        p = tmp / f"{BASE_TAG[stem]}_G_b0.5_t0.6.txt"
         n = write_synonyms(coll, stem, terms, p)
 
-        ref = TFD / coll / "synonyms_backup" / p.name
-        if not ref.exists():
-            ref = TFD / coll / "Synonym_backup" / p.name
+        ref = TFD / coll / p.name
         if ref.exists():
             a, b = read_syn(p), read_syn(ref)
             sa = {frozenset(x.split(",")) for x in a}

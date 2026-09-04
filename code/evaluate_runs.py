@@ -17,9 +17,6 @@ QRELS = {"WT09": "qrels.web.1-50.txt", "WT10": "qrels.web.51-100.txt",
          "WT11": "qrels.web.101-150.txt", "WT12": "qrels.web.151-200.txt",
          "WWW13": "qrels.www.1-100.txt", "WWW14": "qrels.www.101-180.txt"}
 TAG = {"KStem": "SynonymKStem", "SnowballEng": "SynonymSnowballEng"}
-# cls_orig was the DEFECTIVE [CLS] implementation of the submitted version
-# (attention_mask was not passed); the revision replaces it with the correctly
-# implemented cls_masked. These six representations form the ranking pool.
 METHODS = ["cls_masked", "subword_mean", "bert_static", "sbert", "fasttext", "query_ctx"]
 MODELS = ["BM25k1.2b0.75", "DPH"]
 COLL = sys.argv[1] if len(sys.argv) > 1 else "CW09B"
